@@ -1,8 +1,11 @@
+import javax.sound.midi.Soundbank;
 import java.sql.*;
+import java.util.Scanner;
 
 public class Employee {
     private static Statement state;
     private static PreparedStatement stmt;
+    private static Scanner scan = new Scanner(System.in);
 
     public static void main(String[] args) {
         createRegistrationTable();
@@ -20,15 +23,17 @@ public class Employee {
             state.executeUpdate(sqlCommand);
             state.execute("USE dbd_employee");
 
-            stmt = connection.prepareStatement("INSERT INTO salary VALUES(?, ?, ?, ?, ?)");
+            stmt = connection.prepareStatement("INSERT INTO salary (firstname,lastname,department,amount)VALUES(?, ?, ?, ?)");
 
-            createTable();
-            insertRecordsInTable();
+            //createTable();
+            //insertRecordsInTable();
+            deleteSingleRecordViaTransaction();
            /* readRecordsFromTable(state);
             readSortedRecordsFromTable(state);
             */
             state.close();
             stmt.close();
+            connection.close();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -51,40 +56,59 @@ public class Employee {
 
     private static void insertRecordsInTable() {
         try {
-            stmt.setInt(1,101);
-            stmt.setString(2, "Max");
-            stmt.setString(3, "Mustermann");
-            stmt.setString(4, "Engineering");
-            stmt.setInt(5, 2000);
-            stmt.executeUpdate();
+            //stmt.setInt(1, '?');
+            stmt.setString(1, "Max");
+            stmt.setString(2, "Mustermann");
+            stmt.setString(3, "Engineering");
+            stmt.setInt(4, 2000);
+            stmt.addBatch();
 
-            stmt.setInt(1,102);
-            stmt.setString(2, "Katrin");
-            stmt.setString(3, "Musterfrau");
-            stmt.setString(4, "Production");
-            stmt.setInt(5, 2200);
-            stmt.executeUpdate();
+            //stmt.setInt(1,'?');
+            stmt.setString(1, "Katrin");
+            stmt.setString(2, "Musterfrau");
+            stmt.setString(3, "Production");
+            stmt.setInt(4, 2200);
+            stmt.addBatch();
 
-            stmt.setInt(1,103);
-            stmt.setString(2, "John");
-            stmt.setString(3, "Doe");
-            stmt.setString(4, "Engineering");
-            stmt.setInt(5, 2400);
-            stmt.executeUpdate();
+            //stmt.setInt(1,'?');
+            stmt.setString(1, "John");
+            stmt.setString(2, "Doe");
+            stmt.setString(3, "Engineering");
+            stmt.setInt(4, 2400);
+            stmt.addBatch();
 
-            stmt.setInt(1,104);
-            stmt.setString(2, "Becker");
-            stmt.setString(3, "Heinz");
-            stmt.setString(4, "Marketing");
-            stmt.setInt(5, 2800);
-            stmt.executeUpdate();
+            //stmt.setInt(1,);
+            stmt.setString(1, "Becker");
+            stmt.setString(2, "Heinz");
+            stmt.setString(3, "Marketing");
+            stmt.setInt(4, 2800);
+            stmt.addBatch();
+
+            stmt.executeBatch();
 
         } catch (Exception e) {
 
             System.out.println(e.getMessage());
 
         }
-
     }
+
+    public static void deleteSingleRecordViaTransaction(){
+        String input;
+        Integer checkIfNumber;
+
+        try {
+            input = scan.nextLine();
+            checkIfNumber = Integer.valueOf(input);
+            if (checkIfNumber <= 0){
+                deleteSingleRecordViaTransaction();
+            }
+        }catch (Exception e){
+            System.out.println("new scan");
+            deleteSingleRecordViaTransaction();
+        }
+    }
+
+
 
 }
