@@ -1,6 +1,11 @@
-import javax.sound.midi.Soundbank;
 import java.sql.*;
 import java.util.Scanner;
+
+/*
+ * Author: Bregovic Dominik
+ * jdbc create-insert-delete
+ * Last change: 30.05.2021
+ */
 
 public class Employee {
     private static Connection connection;
@@ -28,8 +33,8 @@ public class Employee {
 
             stmt = connection.prepareStatement("INSERT INTO salary (firstname,lastname,department,amount)VALUES(?, ?, ?, ?)");
 
-            //createTable();
-            //insertRecordsInTable();
+            createTable();
+            insertRecordsInTable();
             deleteSingleRecordViaTransaction();
 
             state.close();
@@ -96,7 +101,6 @@ public class Employee {
 
     public static void deleteSingleRecordViaTransaction(){
        lookingForId(validation());
-
     }
 
     public static Long validation(){
@@ -104,7 +108,7 @@ public class Employee {
         Long checkIfNumber= null;
 
         try {
-            System.out.print("Please enter an ID: ");
+            System.out.print("Please enter an ID:");
             input = scan.nextLine();
             checkIfNumber = Long.valueOf(input);
             if (checkIfNumber <= 0){
@@ -123,14 +127,19 @@ public class Employee {
             result = state.executeQuery("SELECT id FROM salary");
             while (result.next()) {
                if (validateID == result.getLong("id")){
-                   System.out.println("Is it okay to delete?");
+                   sendingDeleteRequest(validateID);
+                   System.out.print("Is it okay to delete?");
                    delete = scan.next();
+
                    if (delete.equals("y")) {
-                       //call delete method
-                       deleteRow(validateID);
+                       //commit the delete request
+                       state.executeBatch();
+                       connection.commit();
+                       System.out.println("Successfully deleted!");
                    }else {
+                       //call rollback method!
+                       connection.rollback();
                        System.out.println("Can not be deleted");
-                       //call rollback method !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                    }
                    return;
                }
@@ -138,18 +147,14 @@ public class Employee {
             //gets only printed when id does not exists
             System.out.println("ID " + validateID + " does not exist");
         } catch (Exception e) {}
-
     }
 
-    public static void deleteRow(Long idRow){
+    public static void sendingDeleteRequest(Long idRow){
+        String delete = "DELETE FROM salary WHERE id ="+idRow;
         try {
             connection.setAutoCommit(false);
-            state.executeQuery("DELETE FROM salary WHERE id =" + idRow);
+            state.addBatch("DELETE FROM salary WHERE id =" + idRow);
         }catch (Exception e){
-            System.out.println("error when try to delete");
         }
     }
-
-
-
 }
