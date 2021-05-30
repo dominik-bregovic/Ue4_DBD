@@ -62,28 +62,25 @@ public class Employee {
 
     private static void insertRecordsInTable() {
         try {
-            //stmt.setInt(1, '?');
+
             stmt.setString(1, "Max");
             stmt.setString(2, "Mustermann");
             stmt.setString(3, "Engineering");
             stmt.setInt(4, 2000);
             stmt.addBatch();
 
-            //stmt.setInt(1,'?');
             stmt.setString(1, "Katrin");
             stmt.setString(2, "Musterfrau");
             stmt.setString(3, "Production");
             stmt.setInt(4, 2200);
             stmt.addBatch();
 
-            //stmt.setInt(1,'?');
             stmt.setString(1, "John");
             stmt.setString(2, "Doe");
             stmt.setString(3, "Engineering");
             stmt.setInt(4, 2400);
             stmt.addBatch();
 
-            //stmt.setInt(1,);
             stmt.setString(1, "Becker");
             stmt.setString(2, "Heinz");
             stmt.setString(3, "Marketing");
@@ -93,14 +90,41 @@ public class Employee {
             stmt.executeBatch();
 
         } catch (Exception e) {
-
-            System.out.println(e.getMessage());
-
+            System.err.println(e.getMessage());
         }
     }
 
     public static void deleteSingleRecordViaTransaction(){
-       lookingForId(validation());
+        Long validateID = validation();
+        String delete;
+
+        try {
+            result = state.executeQuery("SELECT id FROM salary");
+            while (result.next()) {
+
+                if (validateID == result.getLong("id")){
+                    sendingDeleteRequest(validateID);
+                    System.out.print("Is it okay to delete?");
+                    delete = scan.next();
+
+                    if (delete.equals("y")) {
+                        //execute and commit the delete request
+                        state.executeBatch();
+                        connection.commit();
+                        System.out.println("Successfully deleted!");
+                    }else {
+                        //call rollback method!
+                        connection.rollback();
+                        System.out.println("Can not be deleted!");
+                    }
+                    return;
+                }
+            }
+            //gets only printed when id does not exists
+            System.out.println("ID " + validateID + " does not exist!");
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
     }
 
     public static Long validation(){
@@ -120,41 +144,12 @@ public class Employee {
         return checkIfNumber;
     }
 
-    public static void lookingForId(Long validateID){
-        String delete;
-
-        try {
-            result = state.executeQuery("SELECT id FROM salary");
-            while (result.next()) {
-               if (validateID == result.getLong("id")){
-                   sendingDeleteRequest(validateID);
-                   System.out.print("Is it okay to delete?");
-                   delete = scan.next();
-
-                   if (delete.equals("y")) {
-                       //commit the delete request
-                       state.executeBatch();
-                       connection.commit();
-                       System.out.println("Successfully deleted!");
-                   }else {
-                       //call rollback method!
-                       connection.rollback();
-                       System.out.println("Can not be deleted");
-                   }
-                   return;
-               }
-            }
-            //gets only printed when id does not exists
-            System.out.println("ID " + validateID + " does not exist");
-        } catch (Exception e) {}
-    }
-
     public static void sendingDeleteRequest(Long idRow){
-        String delete = "DELETE FROM salary WHERE id ="+idRow;
         try {
             connection.setAutoCommit(false);
             state.addBatch("DELETE FROM salary WHERE id =" + idRow);
         }catch (Exception e){
+            System.err.println(e.getMessage());
         }
     }
 }
