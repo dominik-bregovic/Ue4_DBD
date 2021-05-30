@@ -3,8 +3,10 @@ import java.sql.*;
 import java.util.Scanner;
 
 public class Employee {
+    private static Connection connection;
     private static Statement state;
     private static PreparedStatement stmt;
+    private static ResultSet result;
     private static Scanner scan = new Scanner(System.in);
 
     public static void main(String[] args) {
@@ -18,7 +20,8 @@ public class Employee {
         String sqlCommand;
         sqlCommand = "CREATE DATABASE IF NOT EXISTS dbd_employee CHARACTER SET utf8 COLLATE utf8_unicode_ci";
 
-        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+        try  {
+            connection = DriverManager.getConnection(url, username, password);
             state = connection.createStatement();
             state.executeUpdate(sqlCommand);
             state.execute("USE dbd_employee");
@@ -28,9 +31,7 @@ public class Employee {
             //createTable();
             //insertRecordsInTable();
             deleteSingleRecordViaTransaction();
-           /* readRecordsFromTable(state);
-            readSortedRecordsFromTable(state);
-            */
+
             state.close();
             stmt.close();
             connection.close();
@@ -94,18 +95,58 @@ public class Employee {
     }
 
     public static void deleteSingleRecordViaTransaction(){
+       lookingForId(validation());
+
+    }
+
+    public static Long validation(){
         String input;
-        Integer checkIfNumber;
+        Long checkIfNumber= null;
 
         try {
+            System.out.print("Please enter an ID: ");
             input = scan.nextLine();
-            checkIfNumber = Integer.valueOf(input);
+            checkIfNumber = Long.valueOf(input);
             if (checkIfNumber <= 0){
                 deleteSingleRecordViaTransaction();
             }
         }catch (Exception e){
-            System.out.println("new scan");
             deleteSingleRecordViaTransaction();
+        }
+        return checkIfNumber;
+    }
+
+    public static void lookingForId(Long validateID){
+        String delete;
+
+        try {
+            result = state.executeQuery("SELECT id FROM salary");
+            while (result.next()) {
+               if (validateID == result.getLong("id")){
+                   System.out.println("Is it okay to delete?");
+                   delete = scan.next();
+                   if (delete.equals("y")) {
+                       //call delete method
+                       deleteRow(validateID);
+                   }else {
+                       System.out.println("Can not be deleted");
+                       //call rollback method !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                   }
+                   return;
+               }
+            }
+            //gets only printed when id does not exists
+            System.out.println("ID " + validateID + " does not exist");
+        } catch (Exception e) {}
+
+    }
+
+    public static void deleteRow(Long idRow){
+        try {
+            connection.setAutoCommit(false);
+            state.executeQuery("DELETE FROM salary WHERE id =" + idRow);
+        }catch (Exception e){
+            System.out.println("error when try to delete");
         }
     }
 
